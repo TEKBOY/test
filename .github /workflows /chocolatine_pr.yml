@@ -1,0 +1,55 @@
+name: automatic_result
+
+on:
+    push:
+      branches:
+        - ga-ignore-
+    pull_request:
+      branches:
+        - ga-ignore-
+env:
+      MIRROR_URL: git@github.com:EpitechPromo2026/B-DOP-200-COT-2-1-chocolatine-fred.tossou.git
+      EXECUTABLES: antman/antman,giantman/giantman
+
+jobs:
+    check_repository_cleanliness:
+      name: find_sweet
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - id: check_repository_cleanliness
+          run:
+            LAZY_FILE=($(find . -wholename "*/tmp/*" -name "*#" -o -name "#*" -o -iname "*pain_au_chocolat*"))
+            for FILES in ${LAZY_FILES[#]}; do
+            echo "::error file=${FILE#./}, title=Unwanted file detected::${FILE./}"; done
+            if [[ -n $r_file ]]
+            then
+              exit 1
+            else
+            echo No unwanted file detected
+            fi
+
+    compilation_verification:
+        needs: [check_repository_cleanliness]
+        name: find if file compile well
+        runs-on: ubuntu-latest
+        container:
+          image: epitechcontent/epitest-docker:latest
+        steps:
+          - uses: actions/checkout@v3
+          - id: check_program_compilation
+            run: make
+            timeout-minutes: 2
+          - run: make clean
+
+    file_working_test:
+        needs: [compilation_verification]
+        name: test run
+        runs-on: unbuntu-latest
+        container:
+          image:  epitechcontent/epitest-docker:latest
+        steps:
+          - uses: action/checkout@v3
+          - id: run_test
+            run: make test_run
+            timeout-minutes: 2
